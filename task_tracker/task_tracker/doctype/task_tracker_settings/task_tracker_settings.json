@@ -1,0 +1,73 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2025-01-31 15:15:02.187211",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "desktop_app_settings_tab",
+  "idle_timeout_minutes",
+  "column_break_bwll",
+  "default_activity_type",
+  "default_project",
+  "settings_tab"
+ ],
+ "fields": [
+  {
+   "fieldname": "desktop_app_settings_tab",
+   "fieldtype": "Tab Break",
+   "label": "Desktop App Settings"
+  },
+  {
+   "default": "15",
+   "description": "Timer would be stopped automatically after these minutes if mouse and keyboard are inactive",
+   "fieldname": "idle_timeout_minutes",
+   "fieldtype": "Int",
+   "label": "Idle Timeout (minutes)"
+  },
+  {
+   "fieldname": "column_break_bwll",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "default_activity_type",
+   "fieldtype": "Link",
+   "label": "Default Activity Type",
+   "options": "Activity Type"
+  },
+  {
+   "fieldname": "default_project",
+   "fieldtype": "Link",
+   "label": "Default Project",
+   "options": "Project"
+  },
+  {
+   "fieldname": "settings_tab",
+   "fieldtype": "Tab Break",
+   "label": "Settings"
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "issingle": 1,
+ "links": [],
+ "modified": "2025-01-31 15:18:58.010364",
+ "modified_by": "Administrator",
+ "module": "Task Tracker",
+ "name": "Task Tracker Settings",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "print": 1,
+   "read": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}

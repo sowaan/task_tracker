@@ -6,7 +6,7 @@
  "engine": "InnoDB",
  "field_order": [
   "desktop_app_settings_tab",
-  "heartbeat_interval_minutes",
+  "idle_timeout_minutes",
   "column_break_bwll",
   "default_activity_type",
   "default_project",
@@ -17,6 +17,13 @@
    "fieldname": "desktop_app_settings_tab",
    "fieldtype": "Tab Break",
    "label": "Desktop App Settings"
+  },
+  {
+   "default": "15",
+   "description": "Timer would be stopped automatically after these minutes if mouse and keyboard are inactive",
+   "fieldname": "idle_timeout_minutes",
+   "fieldtype": "Int",
+   "label": "Idle Timeout (minutes)"
   },
   {
    "fieldname": "column_break_bwll",
@@ -38,19 +45,12 @@
    "fieldname": "settings_tab",
    "fieldtype": "Tab Break",
    "label": "Settings"
-  },
-  {
-   "default": "5",
-   "description": "Heartbeat would be sent by desktop app after this interval",
-   "fieldname": "heartbeat_interval_minutes",
-   "fieldtype": "Int",
-   "label": "Heartbeat Interval (minutes)"
   }
  ],
  "index_web_pages_for_search": 1,
  "issingle": 1,
  "links": [],
- "modified": "2025-02-14 14:08:08.417673",
+ "modified": "2025-01-31 15:18:58.010364",
  "modified_by": "Administrator",
  "module": "Task Tracker",
  "name": "Task Tracker Settings",

@@ -37,6 +37,23 @@ bench --site your-site-name migrate
 
 Replace `your-site-name` with the name of your Frappe site.
 
+### Screens
+Task Tracker Setting
+
+<img width="1224" alt="image" src="https://github.com/user-attachments/assets/2efc5740-00ed-4c1d-87db-ff6d6204d741" />
+
+Timesheet Dashboard
+
+<img width="1224" alt="image" src="https://github.com/user-attachments/assets/8712191b-99d2-41f9-a2e6-085cfd83c116" />
+
+Green = Working <br>
+Red = Not working <br>
+Yellow = Working but not productive <br>
+
+Timesheet Hearbeat (Sent by Desktop App)<br>
+<img width="1224" alt="image" src="https://github.com/user-attachments/assets/db333f0d-eec3-4aa0-a6f5-2b83732ca2b0" />
+
+
 ### License
 
 MIT

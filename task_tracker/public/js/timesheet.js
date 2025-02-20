@@ -11,7 +11,7 @@ frappe.ui.form.on('Timesheet', {
             args: { timesheet: frm.doc.name },
             callback: function(r) {
                 if (r.message) {
-                    console.log("Received heatmap data:", r.message);
+                    // console.log("Received heatmap data:", r.message);
                     
                     let showHeartbeatMap = r.message.show_heartbeat_map_on_timesheet
                     let showSpareBlock = r.message.show_sparetime_between_activities_on_timesheet

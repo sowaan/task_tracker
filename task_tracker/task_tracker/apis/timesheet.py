@@ -1,6 +1,7 @@
 import frappe
 import base64
 import json
+from frappe import _
 from task_tracker.task_tracker.utils import analyze_image
 
 
@@ -75,6 +76,28 @@ def create_time_log(timesheet, task_name, time_spent, from_time, to_time, projec
     timesheet.save(ignore_permissions=True)
 
     return timesheet
+
+@frappe.whitelist()
+def delete_time_logs(timesheet_id, task_ids):
+    try:
+        timesheet = frappe.get_doc("Timesheet", timesheet_id)
+        task_ids = frappe.parse_json(task_ids) if isinstance(task_ids, str) else task_ids
+        
+        if not timesheet:
+            return {"status": "error", "message": _(f"Timesheet {timesheet_id} not found.")}
+
+        updated_time_logs = [log for log in timesheet.time_logs if log.name not in task_ids]
+        timesheet.time_logs = updated_time_logs
+        timesheet.save(ignore_permissions=True)
+        frappe.db.commit()
+        
+        return {"status": "success", "message": _(f"Time logs for tasks {', '.join(task_ids)} deleted successfully.")}
+    
+    except Exception as e:
+        frappe.log_error(frappe.get_traceback(), "delete_time_logs Error")
+        return {"status": "error", "message": _(f"Error deleting time logs: {str(e)}")}
+    
+    
 
 @frappe.whitelist(allow_guest=True)  # Remove allow_guest=True if authentication is required
 def save_timesheet_heartbeat(timesheet, description, screenshot=None):

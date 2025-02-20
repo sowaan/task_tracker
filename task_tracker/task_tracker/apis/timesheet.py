@@ -78,6 +78,31 @@ def create_time_log(timesheet, task_name, time_spent, from_time, to_time, projec
     return timesheet
 
 @frappe.whitelist()
+def update_time_log(timesheet, task_name, time_spent, from_time, to_time, project, activity_type):
+    timesheet = frappe.get_doc("Timesheet", timesheet)
+    task_tracker_settings = frappe.get_doc("Task Tracker Settings")
+    
+    # Convert time_spent to hours
+    hours_spent = time_spent / 3600
+
+    if not project:
+        project = task_tracker_settings.default_project
+    if not activity_type:
+        activity_type = task_tracker_settings.default_activity_type
+
+    for log in timesheet.time_logs:
+        if not log.to_time:
+            log.activity_type = activity_type
+            log.project = project
+            log.hours_category = "CPH" if project else "NCPH"
+            log.hours = hours_spent
+            log.to_time = to_time
+
+    timesheet.save(ignore_permissions=True)
+
+    return timesheet
+
+@frappe.whitelist()
 def delete_time_logs(timesheet_id, task_ids):
     try:
         timesheet = frappe.get_doc("Timesheet", timesheet_id)

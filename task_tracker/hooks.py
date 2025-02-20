@@ -8,7 +8,7 @@ app_license = "mit"
 # Apps
 # ------------------
 
-# required_apps = []
+required_apps = ["erpnext"]
 
 # Each item in the list will be shown as an app in the apps page
 # add_to_apps_screen = [
@@ -25,7 +25,7 @@ app_license = "mit"
 # ------------------
 
 # include js, css files in header of desk.html
-# app_include_css = "/assets/task_tracker/css/task_tracker.css"
+app_include_css = "/assets/task_tracker/css/timesheet_heatmap.css"
 # app_include_js = "/assets/task_tracker/js/task_tracker.js"
 
 # include js, css files in header of web template
@@ -43,7 +43,7 @@ app_license = "mit"
 # page_js = {"page" : "public/js/file.js"}
 
 # include js in doctype views
-# doctype_js = {"doctype" : "public/js/doctype.js"}
+doctype_js = {"Timesheet" : "public/js/timesheet.js"}
 # doctype_list_js = {"doctype" : "public/js/doctype_list.js"}
 # doctype_tree_js = {"doctype" : "public/js/doctype_tree.js"}
 # doctype_calendar_js = {"doctype" : "public/js/doctype_calendar.js"}
@@ -144,10 +144,20 @@ app_license = "mit"
 # 		"on_trash": "method"
 # 	}
 # }
+doc_events = {
+	"Timesheet": {
+		"validate": "task_tracker.task_tracker.events.timesheet.validate"
+	}
+}
 
 # Scheduled Tasks
 # ---------------
 
+scheduler_events = {
+    "daily": [
+        "task_tracker.task_tracker.jobs.timesheet.delete_old_timesheet_heartbeats"
+    ]
+}
 # scheduler_events = {
 # 	"all": [
 # 		"task_tracker.tasks.all"
@@ -241,4 +251,30 @@ app_license = "mit"
 # default_log_clearing_doctypes = {
 # 	"Logging DocType Name": 30  # days to retain logs
 # }
+
+fixtures = [
+	{
+		"doctype":"Custom Field",
+		"filters":[
+            [
+                "dt",
+                "in",
+                (
+                    "Timesheet"
+                )
+            ],
+            [
+                "fieldname",
+                "in",
+                (
+                    "custom_chart", 
+                    "custom_section_break_hps7y", 
+                    "custom_heartbeat_interval", 
+                    "custom_dashboard", 
+                    "custom_heatmap_data"
+                )
+            ]
+        ]
+	}
+]
 

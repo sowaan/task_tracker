@@ -6,24 +6,33 @@
  "engine": "InnoDB",
  "field_order": [
   "desktop_app_settings_tab",
-  "idle_timeout_minutes",
+  "heartbeat_timeout_minutes",
+  "heartbeat_max_idle_timeout",
+  "show_heartbeat_map_on_timesheet",
+  "show_sparetime_between_activities_on_timesheet",
+  "send_screenshoot_with_heartbeat",
+  "measure_productivity_using_ai",
+  "send_screenshoot_in_original_quality",
+  "screenshoot_height",
+  "screenshoot_width",
+  "remind_user_to_start_work",
+  "reminder_interval_minutes",
   "column_break_bwll",
   "default_activity_type",
   "default_project",
-  "settings_tab"
+  "settings_tab",
+  "hugging_face_api_token",
+  "hugging_face_model",
+  "column_break_rkns",
+  "data_tab",
+  "delete_heartbeat_data_after_days",
+  "column_break_elwq"
  ],
  "fields": [
   {
    "fieldname": "desktop_app_settings_tab",
    "fieldtype": "Tab Break",
-   "label": "Desktop App Settings"
-  },
-  {
-   "default": "15",
-   "description": "Timer would be stopped automatically after these minutes if mouse and keyboard are inactive",
-   "fieldname": "idle_timeout_minutes",
-   "fieldtype": "Int",
-   "label": "Idle Timeout (minutes)"
+   "label": "Desktop App"
   },
   {
    "fieldname": "column_break_bwll",
@@ -44,13 +53,119 @@
   {
    "fieldname": "settings_tab",
    "fieldtype": "Tab Break",
-   "label": "Settings"
+   "label": "AI Integration"
+  },
+  {
+   "default": "15",
+   "description": "Heartbeat would be sent by desktop app after this interval",
+   "fieldname": "heartbeat_timeout_minutes",
+   "fieldtype": "Int",
+   "label": "Heartbeat Interval (minutes)"
+  },
+  {
+   "default": "0",
+   "fieldname": "send_screenshoot_with_heartbeat",
+   "fieldtype": "Check",
+   "label": "Send Screenshot With Heartbeat"
+  },
+  {
+   "default": "0",
+   "depends_on": "eval:doc.send_screenshoot_with_heartbeat",
+   "description": "Takes higher disk space",
+   "fieldname": "send_screenshoot_in_original_quality",
+   "fieldtype": "Check",
+   "label": "Send Screenshot in Original Quality"
+  },
+  {
+   "default": "500",
+   "depends_on": "eval:doc.send_screenshoot_with_heartbeat && !doc.send_screenshoot_in_original_quality",
+   "fieldname": "screenshoot_height",
+   "fieldtype": "Int",
+   "label": "Screenshot Height"
+  },
+  {
+   "default": "500",
+   "depends_on": "eval:doc.send_screenshoot_with_heartbeat && !doc.send_screenshoot_in_original_quality",
+   "fieldname": "screenshoot_width",
+   "fieldtype": "Int",
+   "label": "Screenshot Width"
+  },
+  {
+   "default": "0",
+   "fieldname": "measure_productivity_using_ai",
+   "fieldtype": "Check",
+   "label": "Measure Productivity From Screenshot using AI"
+  },
+  {
+   "fieldname": "hugging_face_api_token",
+   "fieldtype": "Data",
+   "label": "Hugging Face API Token"
+  },
+  {
+   "default": "mistralai/Mistral-7B-Instruct-v0.2",
+   "description": "https://huggingface.co/models",
+   "fieldname": "hugging_face_model",
+   "fieldtype": "Data",
+   "label": "Hugging Face Model"
+  },
+  {
+   "fieldname": "column_break_rkns",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "0",
+   "fieldname": "show_heartbeat_map_on_timesheet",
+   "fieldtype": "Check",
+   "label": "Show Heartbeat Map on Timesheet"
+  },
+  {
+   "default": "0",
+   "description": "If User did not Start Work, App will give Reminders to Start Work",
+   "fieldname": "remind_user_to_start_work",
+   "fieldtype": "Check",
+   "label": "Remind User to Start Work"
+  },
+  {
+   "default": "5",
+   "depends_on": "eval:doc.remind_user_to_start_work",
+   "fieldname": "reminder_interval_minutes",
+   "fieldtype": "Int",
+   "label": "Reminder Interval (minutes)"
+  },
+  {
+   "default": "3",
+   "description": "Heartbeat will not be sent by App if User is Idle for this time <br>\n(Measures working/not working during the Activity time)",
+   "fieldname": "heartbeat_max_idle_timeout",
+   "fieldtype": "Int",
+   "label": "Heartbeat Max Idle Timeout (minutes)"
+  },
+  {
+   "fieldname": "data_tab",
+   "fieldtype": "Tab Break",
+   "label": "Data"
+  },
+  {
+   "default": "30",
+   "description": "Data will be deleted after the days timesheet is submitted.\n<br>\nIt is safe to delete the heartbeat data after timesheet is submitted because statistics are saved in timesheet",
+   "fieldname": "delete_heartbeat_data_after_days",
+   "fieldtype": "Int",
+   "label": "Delete Heartbeat Data After (days)"
+  },
+  {
+   "fieldname": "column_break_elwq",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "0",
+   "fieldname": "show_sparetime_between_activities_on_timesheet",
+   "fieldtype": "Check",
+   "label": "Show Sparetime between Activities on Timesheet"
   }
  ],
  "index_web_pages_for_search": 1,
  "issingle": 1,
  "links": [],
- "modified": "2025-01-31 15:18:58.010364",
+ "modified": "2025-02-20 15:02:33.893585",
  "modified_by": "Administrator",
  "module": "Task Tracker",
  "name": "Task Tracker Settings",

@@ -1,0 +1,7 @@
+pytesseract==0.3.10
+opencv-python==4.7.0.68
+Pillow==9.5.0
+numpy==1.23.5
+transformers==4.30.0
+torch
+openai

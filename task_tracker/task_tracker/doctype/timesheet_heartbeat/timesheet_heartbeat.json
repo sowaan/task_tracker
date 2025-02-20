@@ -1,0 +1,120 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2025-02-14 14:12:09.392207",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "timesheet",
+  "employee",
+  "employee_name",
+  "description",
+  "column_break_wtvx",
+  "productivity_flag",
+  "productivity_reason",
+  "section_break_pxgs",
+  "ai_response",
+  "error_message"
+ ],
+ "fields": [
+  {
+   "fieldname": "timesheet",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Timesheet",
+   "options": "Timesheet",
+   "reqd": 1
+  },
+  {
+   "fetch_from": "timesheet.employee",
+   "fieldname": "employee",
+   "fieldtype": "Link",
+   "in_standard_filter": 1,
+   "label": "Employee",
+   "options": "Employee",
+   "read_only": 1
+  },
+  {
+   "fetch_from": "timesheet.employee_name",
+   "fieldname": "employee_name",
+   "fieldtype": "Read Only",
+   "label": "Employee Name"
+  },
+  {
+   "fieldname": "description",
+   "fieldtype": "Small Text",
+   "in_list_view": 1,
+   "label": "Description",
+   "reqd": 1
+  },
+  {
+   "fieldname": "column_break_wtvx",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "productivity_flag",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Productivity Flag",
+   "read_only": 1
+  },
+  {
+   "fieldname": "productivity_reason",
+   "fieldtype": "Small Text",
+   "label": "Productivity Reason",
+   "read_only": 1
+  },
+  {
+   "fieldname": "section_break_pxgs",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "ai_response",
+   "fieldtype": "Small Text",
+   "label": "AI Response",
+   "read_only": 1
+  },
+  {
+   "fieldname": "error_message",
+   "fieldtype": "Small Text",
+   "label": "Error Message",
+   "read_only": 1
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2025-02-20 14:18:49.689726",
+ "modified_by": "Administrator",
+ "module": "Task Tracker",
+ "name": "Timesheet Heartbeat",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [
+  {
+   "color": "Green",
+   "title": "productive"
+  },
+  {
+   "color": "Red",
+   "title": "non-productive"
+  }
+ ],
+ "track_changes": 1
+}

@@ -1,5 +1,10 @@
 frappe.ui.form.on('Timesheet', {
     refresh: function (frm) {
+        if (frm.is_new()) {
+            // If the timesheet is new (not saved), do not proceed with the refresh logic
+            frm.toggle_display("custom_chart", false);
+            return;
+        }
 
         let container = $(frm.fields_dict.custom_chart.wrapper);
         container.empty();

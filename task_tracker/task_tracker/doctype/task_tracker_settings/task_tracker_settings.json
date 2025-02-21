@@ -10,6 +10,7 @@
   "heartbeat_max_idle_timeout",
   "show_heartbeat_map_on_timesheet",
   "show_sparetime_between_activities_on_timesheet",
+  "show_summary_on_timesheet",
   "send_screenshoot_with_heartbeat",
   "measure_productivity_using_ai",
   "send_screenshoot_in_original_quality",
@@ -160,12 +161,18 @@
    "fieldname": "show_sparetime_between_activities_on_timesheet",
    "fieldtype": "Check",
    "label": "Show Sparetime between Activities on Timesheet"
+  },
+  {
+   "default": "0",
+   "fieldname": "show_summary_on_timesheet",
+   "fieldtype": "Check",
+   "label": "Show Summary on Timesheet"
   }
  ],
  "index_web_pages_for_search": 1,
  "issingle": 1,
  "links": [],
- "modified": "2025-02-20 15:02:33.893585",
+ "modified": "2025-02-21 13:43:16.481634",
  "modified_by": "Administrator",
  "module": "Task Tracker",
  "name": "Task Tracker Settings",

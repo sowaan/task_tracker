@@ -21,12 +21,21 @@ def get_heatmap_data(timesheet):
     except Exception as e:
         frappe.throw(f"Error fetching Timesheet: {e}")
 
-    
     heatmap_data = []
     task_tracker_settings = frappe.get_doc("Task Tracker Settings")
     
+    total_working_hours = 0
+    total_not_working_hours = 0
+    total_productive_hours = 0
+    total_non_productive_hours = 0
+    
     if (doc.custom_heatmap_data and doc.docstatus != 0):
-        heatmap_data = json.loads(doc.custom_heatmap_data)
+        json_data = json.loads(doc.custom_heatmap_data)
+        heatmap_data = json_data.get("heatmap_data")
+        total_working_hours = json_data.get("total_working_hours")
+        total_not_working_hours = json_data.get("total_not_working_hours")
+        total_productive_hours = json_data.get("total_productive_hours")
+        total_non_productive_hours = json_data.get("total_non_productive_hours")
     else:
         # Set default heartbeat interval to 1 minute if missing or 0
         heartbeat_interval = doc.custom_heartbeat_interval if getattr(doc, "custom_heartbeat_interval", 0) else 1  
@@ -34,7 +43,16 @@ def get_heatmap_data(timesheet):
         # Fetch time logs
         time_logs = [log for log in doc.get("time_logs", []) if log.get("from_time") and log.get("to_time")]
         if not time_logs:
-            return []
+            return {
+                "heatmap_data": [],
+                "total_working_hours": total_working_hours,
+                "total_not_working_hours": total_not_working_hours,
+                "total_productive_hours": total_productive_hours,
+                "total_non_productive_hours": total_non_productive_hours,
+                "show_heartbeat_map_on_timesheet": task_tracker_settings.show_heartbeat_map_on_timesheet,
+                "show_sparetime_between_activities_on_timesheet": task_tracker_settings.show_sparetime_between_activities_on_timesheet,
+                "show_summary_on_timesheet": task_tracker_settings.show_summary_on_timesheet
+            }
 
         # Fetch heartbeats with productivity_flag
         heartbeats = frappe.get_all(
@@ -53,6 +71,7 @@ def get_heatmap_data(timesheet):
         for log in time_logs:
             from_time = get_datetime(log.from_time)
             to_time = get_datetime(log.to_time)
+            duration_minutes = (to_time - from_time).total_seconds() / 60
 
             activity_data = {
                 "activity": log.activity_type,
@@ -60,13 +79,19 @@ def get_heatmap_data(timesheet):
                 "description": log.description,
                 "from_time": from_time.strftime("%H:%M"),
                 "to_time": to_time.strftime("%H:%M"),
-                "hours": round(log.hours,1),
+                "hours": round(log.hours, 2),
                 "hours_category": log.hours_category,
                 "minutes": []
             }
 
             current_time = from_time
-            while current_time <= to_time:
+            working_minutes = 0
+            not_working_minutes = 0
+            productive_minutes = 0
+            non_productive_minutes = 0
+            
+            isEnd = False
+            while current_time <= to_time and not isEnd:
                 time_str = current_time.strftime("%Y-%m-%d %H:%M")
                 productivity_flag = heartbeat_data.get(time_str, None)
 
@@ -74,12 +99,15 @@ def get_heatmap_data(timesheet):
                     if productivity_flag == "non-productive":
                         color = "#FFA500"  # Yellowish Orange (Non-Productive)
                         status = "non-productive"
+                        non_productive_minutes += heartbeat_interval
                     else:
                         color = "#008000"  # Green (Productive)
                         status = "working"
+                        productive_minutes += heartbeat_interval
                 else:
                     color = "#FF0000"  # Red (No heartbeat recorded)
                     status = "not_working"
+                    not_working_minutes += heartbeat_interval
 
                 activity_data["minutes"].append({
                     "time": current_time.strftime("%H:%M"),
@@ -87,15 +115,40 @@ def get_heatmap_data(timesheet):
                     "color": color
                 })
 
-                current_time += datetime.timedelta(minutes=heartbeat_interval)  # Use custom heartbeat interval
+                if(current_time == to_time):
+                    isEnd = True
+                
+                if (
+                    (current_time + datetime.timedelta(minutes=heartbeat_interval) > to_time)
+                    and current_time.strftime("%H:%M") != to_time.strftime("%H:%M")
+                    ):
+                    current_time = to_time
+                else:
+                    current_time += datetime.timedelta(minutes=heartbeat_interval)  # Use custom heartbeat interval
+
+            total_working_hours += (productive_minutes + non_productive_minutes + not_working_minutes)
+            total_not_working_hours += not_working_minutes
+            total_productive_hours += productive_minutes
+            total_non_productive_hours += non_productive_minutes
 
             heatmap_data.append(activity_data)
 
+        total_working_hours = round(total_working_hours/60, 2)
+        total_not_working_hours = round(total_not_working_hours/60, 2)
+        total_productive_hours = round(total_productive_hours/60, 2)
+        total_non_productive_hours = round(total_non_productive_hours/60, 2)
+
     return {
         "heatmap_data": heatmap_data,
+        "total_working_hours": total_working_hours,
+        "total_not_working_hours": total_not_working_hours,
+        "total_productive_hours": total_productive_hours,
+        "total_non_productive_hours": total_non_productive_hours,
         "show_heartbeat_map_on_timesheet": task_tracker_settings.show_heartbeat_map_on_timesheet,
-        "show_sparetime_between_activities_on_timesheet": task_tracker_settings.show_sparetime_between_activities_on_timesheet
+        "show_sparetime_between_activities_on_timesheet": task_tracker_settings.show_sparetime_between_activities_on_timesheet,
+        "show_summary_on_timesheet": task_tracker_settings.show_summary_on_timesheet
     }
+
 
 
 def analyze_image(image_path, job_description=None):

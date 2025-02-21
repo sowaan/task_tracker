@@ -146,7 +146,7 @@ doctype_js = {"Timesheet" : "public/js/timesheet.js"}
 # }
 doc_events = {
 	"Timesheet": {
-		"on_submit": "task_tracker.task_tracker.events.timesheet.on_submit"
+		"before_submit": "task_tracker.task_tracker.events.timesheet.before_submit"
 	}
 }
 

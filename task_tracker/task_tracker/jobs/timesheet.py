@@ -53,8 +53,13 @@ def send_heartbeats_to_sowaan_ai():
         frappe.log(f"Sending Timesheet Heartbeats: Found {len(heartbeats)} heartbeats to send to Sowaan AI")
         for hb in heartbeats:
             try:
+                attached_file = frappe.db.get_value("File",
+                    {"attached_to_doctype": "Timesheet Heartbeat", "attached_to_name": hb.name},
+                    "file_url"
+                )
                 send_screenshot_to_sowaan_ai(
                     hb.name, 
+                    attached_file,
                     task_tracker_settings.sowaan_ai_instance_name,
                     task_tracker_settings.sowaan_ai_instance_url,
                     task_tracker_settings.sowaan_ai_api_key,

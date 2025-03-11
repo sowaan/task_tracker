@@ -171,6 +171,7 @@ def save_timesheet_heartbeat(timesheet, description, screenshot=None):
                 frappe.enqueue(send_screenshot_to_sowaan_ai, 
                                docname=heartbeat.name, 
                                ss_path=file_url, 
+                               instance_name=task_tracker_settings.sowaan_ai_instance_name,
                                instance_url=task_tracker_settings.sowaan_ai_instance_url, 
                                api_key=task_tracker_settings.sowaan_ai_api_key, 
                                api_secret=task_tracker_settings.sowaan_ai_api_secret
@@ -215,7 +216,7 @@ def process_screenshot(docname, ss_path):
             'ai_response': response
         })
 
-def send_screenshot_to_sowaan_ai(docname, ss_path, instance_url, api_key, api_secret):
+def send_screenshot_to_sowaan_ai(docname, ss_path, instance_name, instance_url, api_key, api_secret):
     try:
         # Read and encode the image file to base64
         file_path = frappe.get_site_path(ss_path.lstrip("/"))
@@ -233,7 +234,7 @@ def send_screenshot_to_sowaan_ai(docname, ss_path, instance_url, api_key, api_se
         
         # Prepare payload
         payload = {
-            "instance_name": instance_url,
+            "instance_name": instance_name,
             "ref_name": docname,
             "image": encoded_string
         }

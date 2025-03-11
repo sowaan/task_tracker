@@ -186,7 +186,7 @@ def save_timesheet_heartbeat(timesheet, description, screenshot=None):
 
 
 
-@frappe.whitelist
+@frappe.whitelist()
 def update_heartbeat(ref_name, productivity_flag, productivity_reason, ai_response, error_message):
     frappe.db.set_value('Timesheet Heartbeat', ref_name, {
         'productivity_flag': productivity_flag,

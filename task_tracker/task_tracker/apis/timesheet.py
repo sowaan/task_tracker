@@ -2,6 +2,7 @@ import frappe
 import base64
 import json
 from frappe import _
+import requests
 from task_tracker.task_tracker.utils import analyze_image
 
 
@@ -124,7 +125,7 @@ def delete_time_logs(timesheet_id, task_ids):
     
     
 
-@frappe.whitelist(allow_guest=True)  # Remove allow_guest=True if authentication is required
+@frappe.whitelist  # Remove allow_guest=True if authentication is required
 def save_timesheet_heartbeat(timesheet, description, screenshot=None):
     task_tracker_settings = frappe.get_doc("Task Tracker Settings")
     try:
@@ -155,12 +156,25 @@ def save_timesheet_heartbeat(timesheet, description, screenshot=None):
             heartbeat.save(ignore_permissions=True)  # Update the record with the screenshot URL
 
             if (task_tracker_settings.measure_productivity_using_ai 
+                and not task_tracker_settings.use_sowaan_ai
                 and task_tracker_settings.hugging_face_api_token
                 and task_tracker_settings.hugging_face_model):
                 if file_url.startswith('/'):
                     file_url = file_url[1:]
 
                 frappe.enqueue(process_screenshot, docname=heartbeat.name, ss_path=file_url)
+            elif (task_tracker_settings.measure_productivity_using_ai 
+                and task_tracker_settings.use_sowaan_ai
+                and task_tracker_settings.sowaan_ai_instance_url
+                and task_tracker_settings.sowaan_ai_api_key
+                and task_tracker_settings.sowaan_ai_api_secret):
+                frappe.enqueue(send_screenshot_to_sowaan_ai, 
+                               docname=heartbeat.name, 
+                               ss_path=file_url, 
+                               instance_url=task_tracker_settings.sowaan_ai_instance_url, 
+                               api_key=task_tracker_settings.sowaan_ai_api_key, 
+                               api_secret=task_tracker_settings.sowaan_ai_api_secret
+                               )
 
 
         return {"success": True, "message": "Timesheet Heatbeat saved successfully!"}
@@ -169,6 +183,16 @@ def save_timesheet_heartbeat(timesheet, description, screenshot=None):
         frappe.log_error(frappe.get_traceback(), "Timesheet Heatbeat API Error")
         return {"success": False, "error": str(e)}
 
+
+
+@frappe.whitelist
+def update_heartbeat(ref_name, productivity_flag, productivity_reason, ai_response, error_message):
+    frappe.db.set_value('Timesheet Heartbeat', ref_name, {
+        'productivity_flag': productivity_flag,
+        'productivity_reason': productivity_reason,
+        'error_message': error_message,
+        'ai_response': ai_response
+    })
 
 
 def process_screenshot(docname, ss_path):
@@ -190,5 +214,36 @@ def process_screenshot(docname, ss_path):
             'error_message': str(e),
             'ai_response': response
         })
+
+def send_screenshot_to_sowaan_ai(docname, ss_path, instance_url, api_key, api_secret):
+    try:
+        # Read and encode the image file to base64
+        with open(ss_path, "rb") as image_file:
+            encoded_string = base64.b64encode(image_file.read()).decode("utf-8")
+        
+        # Prepare the API endpoint
+        api_endpoint = f"{instance_url}/api/method/save_image"
+        
+        # Prepare headers
+        headers = {
+            "Content-Type": "application/json",
+            "Authorization": f"token {api_key}:{api_secret}"
+        }
+        
+        # Prepare payload
+        payload = {
+            "instance_name": instance_url,
+            "ref_name": docname,
+            "image": encoded_string
+        }
+        
+        # Make the request
+        response = requests.post(api_endpoint, json=payload, headers=headers)
+        
+        # Handle response
+        if response.status_code != 200:
+            frappe.log_error(f"Failed to send screenshot: {response.text}", "send_screenshot_to_sowaan_ai")
+    except Exception as e:
+        frappe.log_error(f"Exception: {str(e)}", "send_screenshot_to_sowaan_ai")
 
 

@@ -218,7 +218,8 @@ def process_screenshot(docname, ss_path):
 def send_screenshot_to_sowaan_ai(docname, ss_path, instance_url, api_key, api_secret):
     try:
         # Read and encode the image file to base64
-        with open(ss_path, "rb") as image_file:
+        file_path = frappe.get_site_path(ss_path)
+        with open(file_path, "rb") as image_file:
             encoded_string = base64.b64encode(image_file.read()).decode("utf-8")
         
         # Prepare the API endpoint
@@ -244,6 +245,6 @@ def send_screenshot_to_sowaan_ai(docname, ss_path, instance_url, api_key, api_se
         if response.status_code != 200:
             frappe.log_error(f"Failed to send screenshot: {response.text}", "send_screenshot_to_sowaan_ai")
     except Exception as e:
-        frappe.log_error(f"Exception: {str(e)}", "send_screenshot_to_sowaan_ai")
+        frappe.log_error(f"Exception: {str(e)}\n\nTraceback:\n{frappe.get_traceback()}", "send_screenshot_to_sowaan_ai")
 
 

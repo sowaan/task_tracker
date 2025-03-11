@@ -223,7 +223,7 @@ def send_screenshot_to_sowaan_ai(docname, ss_path, instance_url, api_key, api_se
             encoded_string = base64.b64encode(image_file.read()).decode("utf-8")
         
         # Prepare the API endpoint
-        api_endpoint = f"{instance_url}/api/method/save_image"
+        api_endpoint = f"{instance_url}/api/method/sowaan_ai.sowaan_ai.apis.image.save_image"
         
         # Prepare headers
         headers = {

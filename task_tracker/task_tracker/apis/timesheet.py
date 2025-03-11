@@ -218,7 +218,7 @@ def process_screenshot(docname, ss_path):
 def send_screenshot_to_sowaan_ai(docname, ss_path, instance_url, api_key, api_secret):
     try:
         # Read and encode the image file to base64
-        file_path = frappe.get_site_path(ss_path)
+        file_path = frappe.get_site_path(ss_path.lstrip("/"))
         with open(file_path, "rb") as image_file:
             encoded_string = base64.b64encode(image_file.read()).decode("utf-8")
         

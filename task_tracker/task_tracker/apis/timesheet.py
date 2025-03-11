@@ -125,7 +125,7 @@ def delete_time_logs(timesheet_id, task_ids):
     
     
 
-@frappe.whitelist  # Remove allow_guest=True if authentication is required
+@frappe.whitelist()  # Remove allow_guest=True if authentication is required
 def save_timesheet_heartbeat(timesheet, description, screenshot=None):
     task_tracker_settings = frappe.get_doc("Task Tracker Settings")
     try:

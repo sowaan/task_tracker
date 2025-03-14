@@ -95,6 +95,7 @@ def update_time_log(timesheet, task_name, time_spent, from_time, to_time, projec
         if not log.to_time:
             log.activity_type = activity_type
             log.project = project
+            log.description = task_name
             log.hours_category = "CPH" if project else "NCPH"
             log.hours = hours_spent
             log.to_time = to_time

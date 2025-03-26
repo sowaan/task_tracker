@@ -1,6 +1,7 @@
 {
  "actions": [],
  "allow_rename": 1,
+ "autoname": "format:HB-{timesheet}-{#####}",
  "creation": "2025-02-14 14:12:09.392207",
  "doctype": "DocType",
  "engine": "InnoDB",
@@ -85,10 +86,11 @@
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-02-20 14:18:49.689726",
+ "modified": "2025-03-26 16:05:04.152320",
  "modified_by": "Administrator",
  "module": "Task Tracker",
  "name": "Timesheet Heartbeat",
+ "naming_rule": "Expression",
  "owner": "Administrator",
  "permissions": [
   {

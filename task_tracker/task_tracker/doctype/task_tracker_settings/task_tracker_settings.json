@@ -24,6 +24,7 @@
   "default_activity_type",
   "timesheet_automation_column",
   "automatically_apply_workflow_action",
+  "from_date",
   "after_days",
   "from_workflow_state",
   "workflow_action",
@@ -252,18 +253,26 @@
   {
    "default": "1",
    "depends_on": "eval:doc.automatically_apply_workflow_action",
-   "description": "Workflow action would be applied after these days",
+   "description": "Action would be applied after days of timesheet creation",
    "fieldname": "after_days",
    "fieldtype": "Int",
    "label": "After Days",
    "mandatory_depends_on": "eval:doc.automatically_apply_workflow_action",
    "non_negative": 1
+  },
+  {
+   "depends_on": "eval:doc.automatically_apply_workflow_action",
+   "description": "Timesheets after this date will be considered for action",
+   "fieldname": "from_date",
+   "fieldtype": "Date",
+   "label": "From Date",
+   "mandatory_depends_on": "eval:doc.automatically_apply_workflow_action"
   }
  ],
  "index_web_pages_for_search": 1,
  "issingle": 1,
  "links": [],
- "modified": "2025-03-27 12:02:20.415120",
+ "modified": "2025-03-27 13:04:25.142240",
  "modified_by": "Administrator",
  "module": "Task Tracker",
  "name": "Task Tracker Settings",

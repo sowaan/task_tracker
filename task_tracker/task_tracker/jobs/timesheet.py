@@ -77,18 +77,20 @@ def auto_submit_timesheets():
         if after_days > 0:
             from_workflow_state = tt_settings.from_workflow_state
             workflow_action = tt_settings.workflow_action
+            from_date = tt_settings.from_date
 
             cutoff_date = add_days(nowdate(), -after_days)
             timesheets = frappe.get_all("Timesheet",
                 filters={
                     "creation": ["<=", cutoff_date],
+                    "creation": [">=", from_date],
                     "workflow_state": from_workflow_state
                 },
                 fields=["name", "owner"]
             )
 
             # Log the number of timesheets found for submission
-            frappe.log(f"Applying workflow on Timesheets: Found {len(timesheets)} timesheets created on or before {cutoff_date}")
+            frappe.log(f"Applying workflow on Timesheets: Found {len(timesheets)} timesheets created on or before {cutoff_date} and on or after {from_date} in state '{from_workflow_state}'")
 
             for ts in timesheets:
                 try:

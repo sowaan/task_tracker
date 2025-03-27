@@ -155,7 +155,8 @@ doc_events = {
 
 scheduler_events = {
     "daily": [
-        "task_tracker.task_tracker.jobs.timesheet.delete_old_timesheet_heartbeats"
+        "task_tracker.task_tracker.jobs.timesheet.delete_old_timesheet_heartbeats",
+        "task_tracker.task_tracker.jobs.timesheet.auto_submit_timesheets"
     ],
     "hourly": [
         "task_tracker.task_tracker.jobs.timesheet.send_heartbeats_to_sowaan_ai"

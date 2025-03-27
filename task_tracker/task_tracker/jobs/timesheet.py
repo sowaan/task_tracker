@@ -1,6 +1,8 @@
 import frappe
+from frappe.model.workflow import get_workflow_name, get_transitions, apply_workflow
 from frappe.utils import add_days, nowdate
 from task_tracker.task_tracker.apis.timesheet import send_screenshot_to_sowaan_ai
+from datetime import datetime, timedelta
 
 def delete_old_timesheet_heartbeats():
     delete_heartbeat_data_after_days = frappe.db.get_single_value('Task Tracker Settings', 'delete_heartbeat_data_after_days')
@@ -67,5 +69,50 @@ def send_heartbeats_to_sowaan_ai():
                 )
             except Exception as e:
                 frappe.log_error(title="Error Sending Timesheet Heartbeat", message=f"Error sending Heartbeat {hb.name}: {e}") 
+
+def auto_submit_timesheets():
+    tt_settings = frappe.get_doc("Task Tracker Settings")
+    if tt_settings.automatically_apply_workflow_action:
+        after_days = tt_settings.after_days
+        if after_days > 0:
+            from_workflow_state = tt_settings.from_workflow_state
+            workflow_action = tt_settings.workflow_action
+
+            cutoff_date = add_days(nowdate(), -after_days)
+            timesheets = frappe.get_all("Timesheet",
+                filters={
+                    "creation": ["<=", cutoff_date],
+                    "workflow_state": from_workflow_state
+                },
+                fields=["name", "owner"]
+            )
+
+            # Log the number of timesheets found for submission
+            frappe.log(f"Applying workflow on Timesheets: Found {len(timesheets)} timesheets created on or before {cutoff_date}")
+
+            for ts in timesheets:
+                try:
+                    timesheet = frappe.get_doc("Timesheet", ts.name)
+                    
+                    # Apply workflow transition as the creator of the timesheet
+                    frappe.set_user(ts["owner"])
+                    
+                    apply_workflow(timesheet, workflow_action)
+                    
+                    # Add a comment to the Timesheet
+                    timesheet.add_comment(
+                        comment_type="Info",
+                        text=f"{workflow_action} auto-applied by System."
+                    )
+                    
+                    frappe.log_error(f"Timesheet {ts['name']} auto-submitted by '{ts['owner']}' using transition '{workflow_action}'", "Auto Submit Timesheet")
+                    
+                    # Reset user back to administrator/system user
+                    frappe.set_user("Administrator")
+                except Exception as e:
+                    frappe.log_error(title="Error Submitting Timesheet", message=f"Error submitting Timesheet {ts.name}: {e}")
+
+            #commit the db
+            frappe.db.commit()
         
           

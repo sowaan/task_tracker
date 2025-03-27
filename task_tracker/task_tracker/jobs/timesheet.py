@@ -1,6 +1,6 @@
 import frappe
 from frappe.model.workflow import get_workflow_name, get_transitions, apply_workflow
-from frappe.utils import add_days, nowdate
+from frappe.utils import add_days, nowdate, formatdate
 from task_tracker.task_tracker.apis.timesheet import send_screenshot_to_sowaan_ai
 from datetime import datetime, timedelta
 
@@ -78,24 +78,27 @@ def auto_submit_timesheets():
             from_workflow_state = tt_settings.from_workflow_state
             workflow_action = tt_settings.workflow_action
             from_date = tt_settings.from_date
+            # from_date = formatdate(from_date, "dd-mm-yyyy")
 
             cutoff_date = add_days(nowdate(), -after_days)
+            # cutoff_date = formatdate(cutoff_date, "dd-mm-yyyy")
             timesheets = frappe.get_all("Timesheet",
-                filters={
-                    "creation": ["<=", cutoff_date],
-                    "creation": [">=", from_date],
-                    "workflow_state": from_workflow_state
-                },
+                filters=[
+                    ["Timesheet","creation","<=",cutoff_date],
+                    ["Timesheet","creation",">=",from_date],
+                    ["Timesheet","workflow_state","=",from_workflow_state]
+                ],
                 fields=["name", "owner"]
             )
 
             # Log the number of timesheets found for submission
             frappe.log(f"Applying workflow on Timesheets: Found {len(timesheets)} timesheets created on or before {cutoff_date} and on or after {from_date} in state '{from_workflow_state}'")
 
+            # Store the currently logged-in user
+            previous_user = frappe.session.user  
             for ts in timesheets:
                 try:
                     timesheet = frappe.get_doc("Timesheet", ts.name)
-                    
                     # Apply workflow transition as the creator of the timesheet
                     frappe.set_user(ts["owner"])
                     
@@ -107,10 +110,10 @@ def auto_submit_timesheets():
                         text=f"{workflow_action} auto-applied by System."
                     )
                     
-                    frappe.log_error(f"Timesheet {ts['name']} auto-submitted by '{ts['owner']}' using transition '{workflow_action}'", "Auto Submit Timesheet")
+                    # frappe.log_error(f"Timesheet {ts['name']} auto-submitted by '{ts['owner']}' using transition '{workflow_action}'", "Auto Submit Timesheet")
                     
-                    # Reset user back to administrator/system user
-                    frappe.set_user("Administrator")
+                    # Reset user back to previous_user
+                    frappe.set_user(previous_user)
                 except Exception as e:
                     frappe.log_error(title="Error Submitting Timesheet", message=f"Error submitting Timesheet {ts.name}: {e}")
 

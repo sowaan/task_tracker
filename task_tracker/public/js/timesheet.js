@@ -146,17 +146,22 @@ frappe.ui.form.on('Timesheet', {
                             if (popover.length === 0) {
                                 // Create new popover if it doesn't exist
                                 popover = $(`
-                                    <div class="screenshot-popover">
-                                        <div class="popover-header">
+                                    <div class="screenshot-popover" style="position:fixed; z-index:9999; width:400px; height:300px;">
+                                        <div class="popover-header" style="cursor:move; background:#f0f0f0; padding:5px; display:flex; justify-content:space-between; align-items:center;">
                                             <span>Screenshot Preview</span>
-                                            <button class="close-btn">&times;</button>
+                                            <button class="close-btn" style="border:none; background:none; font-size:18px; cursor:pointer;">&times;</button>
                                         </div>
-                                        <a href="${ss}" target="_blank" class="screenshot-link">
-                                            <img src="${ss}" />
+                                        <a href="${ss}" target="_blank" class="screenshot-link" style="display:block; height:calc(100% - 30px);">
+                                            <img src="${ss}" style="max-width:100%; max-height:100%; object-fit:contain; display:block; margin:0 auto;" />
                                         </a>
+                                        <div class="resize-handle resize-bottom-right" style="position:absolute; right:0; bottom:0; width:15px; height:15px; cursor:se-resize; background:#ccc;"></div>
+                                        <div class="resize-handle resize-bottom-left" style="position:absolute; left:0; bottom:0; width:15px; height:15px; cursor:sw-resize; background:#ccc;"></div>
                                     </div>
                                 `);
                                 $("body").append(popover);
+
+                                popover.addClass("animate-hint");
+                                setTimeout(() => popover.removeClass("animate-hint"), 1000);
 
                                 // Position initially near clicked element
                                 let offset = $(this).offset();
@@ -165,22 +170,22 @@ frappe.ui.form.on('Timesheet', {
                                     left: offset.left
                                 });
 
-                                // Make draggable
+                                // --- Draggable ---
                                 let isDragging = false;
                                 let dragOffsetX, dragOffsetY;
 
                                 popover.find(".popover-header").on("mousedown", function(ev) {
                                     isDragging = true;
-                                    dragOffsetX = ev.pageX - popover.offset().left;
-                                    dragOffsetY = ev.pageY - popover.offset().top;
+                                    dragOffsetX = ev.clientX - popover[0].offsetLeft;
+                                    dragOffsetY = ev.clientY - popover[0].offsetTop;
                                     $("body").addClass("dragging");
                                 });
 
                                 $(document).on("mousemove.popover", function(ev) {
                                     if (isDragging) {
                                         popover.css({
-                                            top: ev.pageY - dragOffsetY,
-                                            left: ev.pageX - dragOffsetX
+                                            top: ev.clientY - dragOffsetY,
+                                            left: ev.clientX - dragOffsetX
                                         });
                                     }
                                 });
@@ -190,10 +195,56 @@ frappe.ui.form.on('Timesheet', {
                                     $("body").removeClass("dragging");
                                 });
 
-                                // Close button
+                                // --- Resizing ---
+                                let isResizing = false;
+                                let resizeDir = null;
+                                let startX, startY, startWidth, startHeight, startLeft;
+
+                                popover.find(".resize-handle").on("mousedown", function(ev) {
+                                    isResizing = true;
+                                    resizeDir = $(this).hasClass("resize-bottom-right") ? "bottom-right" : "bottom-left";
+                                    startX = ev.clientX;
+                                    startY = ev.clientY;
+                                    startWidth = popover.width();
+                                    startHeight = popover.height();
+                                    startLeft = popover.position().left;
+                                    ev.preventDefault();
+                                });
+
+                                $(document).on("mousemove.popover-resize", function(ev) {
+                                    if (isResizing) {
+                                        if (resizeDir === "bottom-right") {
+                                            let newWidth = startWidth + (ev.clientX - startX);
+                                            let newHeight = startHeight + (ev.clientY - startY);
+                                            popover.css({
+                                                width: Math.max(200, newWidth),
+                                                height: Math.max(150, newHeight)
+                                            });
+                                        } else if (resizeDir === "bottom-left") {
+                                            let newWidth = startWidth - (ev.clientX - startX);
+                                            let newHeight = startHeight + (ev.clientY - startY);
+                                            let newLeft = startLeft + (ev.clientX - startX);
+                                            if (newWidth > 200) {
+                                                popover.css({
+                                                    width: newWidth,
+                                                    height: Math.max(150, newHeight),
+                                                    left: newLeft
+                                                });
+                                            }
+                                        }
+                                    }
+                                });
+
+                                $(document).on("mouseup.popover-resize", function() {
+                                    isResizing = false;
+                                    resizeDir = null;
+                                });
+
+                                // --- Close button ---
                                 popover.find(".close-btn").on("click", function() {
                                     $(".screenshot-popover").remove();
                                     $(document).off("mousemove.popover mouseup.popover");
+                                    $(document).off("mousemove.popover-resize mouseup.popover-resize");
                                 });
                             } else {
                                 // Replace screenshot only
@@ -201,6 +252,7 @@ frappe.ui.form.on('Timesheet', {
                                 popover.find("img").attr("src", ss);
                             }
                         });
+
 
 
 

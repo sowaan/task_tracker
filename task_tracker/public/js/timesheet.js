@@ -123,8 +123,9 @@ frappe.ui.form.on('Timesheet', {
                                         activity.minutes.map(min => `
                                             <div 
                                                 class="minute ${min.status}" 
-                                                title="${min.time}: ${min.status === 'working' ? 'Working' : min.status === 'non-productive' ? 'Non-Productive' : 'Not Working'}"
+                                                title="${min.time}: ${min.status === 'working' ? 'Working' : min.status === 'non-productive' ? 'Non-Productive' : 'Not Working'}${min.reason ? '\n' + min.reason : ''}"
                                                 style="background-color: ${min.color};"
+                                                data-screenshot="${min.screenshots && min.screenshots.length > 0 ? min.screenshots[0] : ''}"
                                             ></div>
                                         `).join('') : ``}
                                 </div>
@@ -133,13 +134,86 @@ frappe.ui.form.on('Timesheet', {
 
                         container.append(activityBlock);
                         lastActivityEndTime = activity.to_time;
+
+                        // Click handler for popover preview
+                        container.on("click", ".minute", function(e) {
+                            let ss = $(this).data("screenshot");
+                            if (!ss) return;
+
+                            let popover = $(".screenshot-popover");
+
+                            if (popover.length === 0) {
+                                // Create new popover if it doesn't exist
+                                popover = $(`
+                                    <div class="screenshot-popover">
+                                        <div class="popover-header">
+                                            <span>Screenshot Preview</span>
+                                            <button class="close-btn">&times;</button>
+                                        </div>
+                                        <a href="${ss}" target="_blank" class="screenshot-link">
+                                            <img src="${ss}" />
+                                        </a>
+                                    </div>
+                                `);
+                                $("body").append(popover);
+
+                                // Position initially near clicked element
+                                let offset = $(this).offset();
+                                popover.css({
+                                    top: offset.top - popover.outerHeight() - 10,
+                                    left: offset.left
+                                });
+
+                                // Make draggable
+                                let isDragging = false;
+                                let dragOffsetX, dragOffsetY;
+
+                                popover.find(".popover-header").on("mousedown", function(ev) {
+                                    isDragging = true;
+                                    dragOffsetX = ev.pageX - popover.offset().left;
+                                    dragOffsetY = ev.pageY - popover.offset().top;
+                                    $("body").addClass("dragging");
+                                });
+
+                                $(document).on("mousemove.popover", function(ev) {
+                                    if (isDragging) {
+                                        popover.css({
+                                            top: ev.pageY - dragOffsetY,
+                                            left: ev.pageX - dragOffsetX
+                                        });
+                                    }
+                                });
+
+                                $(document).on("mouseup.popover", function() {
+                                    isDragging = false;
+                                    $("body").removeClass("dragging");
+                                });
+
+                                // Close button
+                                popover.find(".close-btn").on("click", function() {
+                                    $(".screenshot-popover").remove();
+                                    $(document).off("mousemove.popover mouseup.popover");
+                                });
+                            } else {
+                                // Replace screenshot only
+                                popover.find(".screenshot-link").attr("href", ss);
+                                popover.find("img").attr("src", ss);
+                            }
+                        });
+
+
+
                     });
 
                 } else {
                     container.append(`<p>No time logs available for this Timesheet.</p>`);
                 }
+                
             }
         });              
         
     }
 });
+
+
+

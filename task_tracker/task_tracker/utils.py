@@ -54,16 +54,42 @@ def get_heatmap_data(timesheet):
                 "show_summary_on_timesheet": task_tracker_settings.show_summary_on_timesheet
             }
 
+        allowed_users = [u.strip() for u in task_tracker_settings.show_screenshots_on_heartbeat_map.split(",")]
+        is_allowed_role = frappe.session.user in allowed_users
+        
+        allowed_users_reason = [u.strip() for u in task_tracker_settings.show_reason_on_heartbeat_map.split(",")]
+        is_allowed_role_reason = frappe.session.user in allowed_users_reason
+
+
         # Fetch heartbeats with productivity_flag
         heartbeats = frappe.get_all(
             "Timesheet Heartbeat",
             filters={"timesheet": timesheet},
-            fields=["creation", "productivity_flag"]
+            fields=["name", "creation", "productivity_flag", "productivity_reason"]
         )
+
+        # Get all attachments for these heartbeats
+        heartbeat_names = [hb.name for hb in heartbeats]
+        attachments = frappe.get_all(
+            "File",
+            filters={"attached_to_doctype": "Timesheet Heartbeat", "attached_to_name": ["in", heartbeat_names]},
+            fields=["attached_to_name", "file_url"]
+        )
+
+        # Map attachments by heartbeat name
+        attachments_map = {}
+        for att in attachments:
+            if att.attached_to_name not in attachments_map:
+                attachments_map[att.attached_to_name] = []
+            attachments_map[att.attached_to_name].append(att.file_url)
 
         # Store heartbeats with their status
         heartbeat_data = {
-            get_datetime(hb.creation).strftime("%Y-%m-%d %H:%M"): hb.productivity_flag
+            get_datetime(hb.creation).strftime("%Y-%m-%d %H:%M"): {
+                "flag": hb.productivity_flag,
+                "reason": hb.productivity_reason,
+                "screenshots": attachments_map.get(hb.name, [])
+            }
             for hb in heartbeats
         }
 
@@ -93,9 +119,14 @@ def get_heatmap_data(timesheet):
             isEnd = False
             while current_time <= to_time and not isEnd:
                 time_str = current_time.strftime("%Y-%m-%d %H:%M")
-                productivity_flag = heartbeat_data.get(time_str, None)
+                heartbeat_entry = heartbeat_data.get(time_str, None)
 
-                if time_str in heartbeat_data:
+                if heartbeat_entry:
+                    productivity_flag = heartbeat_entry["flag"]
+                    productivity_reason = heartbeat_entry.get("reason", "") if is_allowed_role_reason else ""
+                    # Show screenshots only if System Manager
+                    screenshot_links = heartbeat_entry.get("screenshots", []) if is_allowed_role else []
+
                     if productivity_flag == "non-productive":
                         color = "#FFA500"  # Yellowish Orange (Non-Productive)
                         status = "non-productive"
@@ -107,13 +138,20 @@ def get_heatmap_data(timesheet):
                 else:
                     color = "#FF0000"  # Red (No heartbeat recorded)
                     status = "not_working"
+                    screenshot_links = []
                     not_working_minutes += heartbeat_interval
 
-                activity_data["minutes"].append({
+                minute_data = {
                     "time": current_time.strftime("%H:%M"),
                     "status": status,
-                    "color": color
-                })
+                    "color": color,
+                }
+                if screenshot_links:
+                    minute_data["screenshots"] = screenshot_links
+                if productivity_reason:
+                    minute_data["reason"] = productivity_reason
+
+                activity_data["minutes"].append(minute_data)
 
                 if(current_time == to_time):
                     isEnd = True

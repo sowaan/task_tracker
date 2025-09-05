@@ -13,6 +13,8 @@
   "reminder_interval_minutes",
   "column_break_bwll",
   "show_heartbeat_map_on_timesheet",
+  "show_screenshots_on_heartbeat_map",
+  "show_reason_on_heartbeat_map",
   "show_sparetime_between_activities_on_timesheet",
   "show_summary_on_timesheet",
   "send_screenshoot_with_heartbeat",
@@ -267,12 +269,31 @@
    "fieldtype": "Date",
    "label": "From Date",
    "mandatory_depends_on": "eval:doc.automatically_apply_workflow_action"
+  },
+  {
+   "default": "Administrator",
+   "depends_on": "eval:doc.show_heartbeat_map_on_timesheet",
+   "description": "Will be shown to above users only (comma separated values)",
+   "fieldname": "show_screenshots_on_heartbeat_map",
+   "fieldtype": "Data",
+   "label": "Show Screenshots on Heartbeat Map",
+   "placeholder": "abc@sowaan.com, xyz@sowaan.com"
+  },
+  {
+   "default": "Administrator",
+   "depends_on": "eval:doc.show_heartbeat_map_on_timesheet",
+   "description": "Will be shown to above users only (comma separated values)",
+   "fieldname": "show_reason_on_heartbeat_map",
+   "fieldtype": "Data",
+   "label": "Show Reason on Heartbeat Map",
+   "placeholder": "abc@sowaan.com, xyz@sowaan.com"
   }
  ],
+ "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "issingle": 1,
  "links": [],
- "modified": "2025-03-27 13:04:25.142240",
+ "modified": "2025-09-05 14:52:23.797098",
  "modified_by": "Administrator",
  "module": "Task Tracker",
  "name": "Task Tracker Settings",
@@ -289,6 +310,7 @@
    "write": 1
   }
  ],
+ "row_format": "Dynamic",
  "sort_field": "modified",
  "sort_order": "DESC",
  "states": []

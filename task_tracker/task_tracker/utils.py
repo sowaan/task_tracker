@@ -139,6 +139,7 @@ def get_heatmap_data(timesheet):
                     color = "#FF0000"  # Red (No heartbeat recorded)
                     status = "not_working"
                     screenshot_links = []
+                    productivity_reason = ""
                     not_working_minutes += heartbeat_interval
 
                 minute_data = {

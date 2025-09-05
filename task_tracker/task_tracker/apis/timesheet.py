@@ -54,6 +54,10 @@ def create_time_log(timesheet, task_name, time_spent, from_time, to_time, projec
     timesheet = frappe.get_doc("Timesheet", timesheet)
     task_tracker_settings = frappe.get_doc("Task Tracker Settings")
     
+    for log in timesheet.time_logs:
+        if not log.to_time:
+            frappe.throw(_("Previous task is not closed. Try again."))
+    
     # Remove time_logs with description "Initial entry to create a timesheet"
     timesheet.time_logs = [log for log in timesheet.time_logs if log.description != "Initial entry to create a timesheet"]
 
@@ -93,6 +97,14 @@ def update_time_log(timesheet, task_name, time_spent, from_time, to_time, projec
 
     for log in timesheet.time_logs:
         if not log.to_time:
+            # check for another log with same from_time and no to_time
+            duplicate = next((l for l in timesheet.time_logs 
+                            if l != log and l.from_time == log.from_time and not l.to_time), None)
+
+            if duplicate:
+                # keep the current one, remove duplicate
+                timesheet.time_logs.remove(duplicate)
+            
             log.activity_type = activity_type
             log.project = project
             log.description = task_name
@@ -100,6 +112,7 @@ def update_time_log(timesheet, task_name, time_spent, from_time, to_time, projec
             log.hours = hours_spent
             log.to_time = to_time
 
+            
     timesheet.save(ignore_permissions=True)
 
     return timesheet
@@ -126,7 +139,7 @@ def delete_time_logs(timesheet_id, task_ids):
     
     
 
-@frappe.whitelist()  # Remove allow_guest=True if authentication is required
+@frappe.whitelist()
 def save_timesheet_heartbeat(timesheet, description, screenshot=None):
     task_tracker_settings = frappe.get_doc("Task Tracker Settings")
     try:

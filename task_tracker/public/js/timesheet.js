@@ -14,6 +14,7 @@ frappe.ui.form.on('Timesheet', {
             method: 'task_tracker.task_tracker.utils.get_heatmap_data',
             args: { timesheet: frm.doc.name },
             callback: function(r) {
+                $('.screenshot-popover').remove();
                 if (r.message) {
                     let showHeartbeatMap = r.message.show_heartbeat_map_on_timesheet;
                     let showSpareBlock = r.message.show_sparetime_between_activities_on_timesheet;

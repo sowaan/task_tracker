@@ -261,21 +261,10 @@ fixtures = [
 		"doctype":"Custom Field",
 		"filters":[
             [
-                "dt",
-                "in",
+                "module",
+                "=",
                 (
-                    "Timesheet"
-                )
-            ],
-            [
-                "fieldname",
-                "in",
-                (
-                    "custom_chart", 
-                    "custom_section_break_hps7y", 
-                    "custom_heartbeat_interval", 
-                    "custom_dashboard", 
-                    "custom_heatmap_data"
+                    "Task Tracker"
                 )
             ]
         ]

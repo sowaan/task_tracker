@@ -3,6 +3,7 @@ import base64
 import json
 from frappe import _
 import requests
+from frappe.utils import now_datetime
 from task_tracker.task_tracker.utils import analyze_image
 
 
@@ -39,8 +40,12 @@ def create_timesheet_entry():
                 log["activity_type"] = task_tracker_settings.default_activity_type
 
         # Create and save the Timesheet
+        timezone = frappe.db.get_value("User", frappe.session.user, "time_zone")
+        if not timezone:
+            frappe.throw(_("Please set your Time Zone in User Settings."))
         timesheet = frappe.get_doc(data)
         timesheet.custom_heartbeat_interval = task_tracker_settings.heartbeat_timeout_minutes
+        timesheet.custom_timezone = timezone
         timesheet.insert(ignore_permissions=True)
 
         return timesheet
@@ -49,8 +54,32 @@ def create_timesheet_entry():
         frappe.log_error(frappe.get_traceback(), "Timesheet Creation Error")
         return {"error": str(e)}
 
+
 @frappe.whitelist()
-def create_time_log(timesheet, task_name, time_spent, from_time, to_time, project, activity_type):
+def get_timesheets(date, employee):
+    try:
+        draft_workflow_state = frappe.db.get_single_value("Task Tracker Settings", "draft_workflow_state")
+        if draft_workflow_state:
+            timesheets = frappe.get_all("Timesheet",
+                                        filters={
+                                            "employee": employee, 
+                                            "start_date": date,
+                                            "docstatus": 0,
+                                            "workflow_state": draft_workflow_state,
+                                        },
+                                        fields=["name", "start_date", "end_date"],
+                                        order_by="modified desc"
+            )
+            return timesheets
+        else:
+            return {"error": _("Draft Workflow State not set in Settings")}
+    except Exception as e:
+        frappe.log_error(frappe.get_traceback(), _("Error fetching timesheets"))
+        return {"error": str(e)}
+    
+
+@frappe.whitelist()
+def create_time_log(timesheet, task_name, time_spent, from_time, to_time, project, activity_type, project_task = None):
     timesheet = frappe.get_doc("Timesheet", timesheet)
     task_tracker_settings = frappe.get_doc("Task Tracker Settings")
     
@@ -72,18 +101,20 @@ def create_time_log(timesheet, task_name, time_spent, from_time, to_time, projec
     row = timesheet.append('time_logs', {})
     row.activity_type = activity_type
     row.project = project
+    if project_task:    
+        row.task = project_task
     row.hours_category = "CPH" if project else "NCPH"
     row.description = task_name
     row.hours = hours_spent
-    row.from_time = from_time
-    row.to_time = to_time
+    row.from_time = from_time#now_datetime
+    # row.to_time = to_time
 
     timesheet.save(ignore_permissions=True)
 
     return timesheet
 
 @frappe.whitelist()
-def update_time_log(timesheet, task_name, time_spent, from_time, to_time, project, activity_type):
+def update_time_log(timesheet, task_name, time_spent, from_time, to_time, project, activity_type, project_task=None):
     timesheet = frappe.get_doc("Timesheet", timesheet)
     task_tracker_settings = frappe.get_doc("Task Tracker Settings")
     
@@ -107,10 +138,12 @@ def update_time_log(timesheet, task_name, time_spent, from_time, to_time, projec
             
             log.activity_type = activity_type
             log.project = project
+            if project_task:    
+                log.task = project_task
             log.description = task_name
             log.hours_category = "CPH" if project else "NCPH"
             log.hours = hours_spent
-            log.to_time = to_time
+            log.to_time = to_time#now_datetime
 
             
     timesheet.save(ignore_permissions=True)

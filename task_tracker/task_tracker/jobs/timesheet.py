@@ -74,18 +74,17 @@ def auto_submit_timesheets():
     tt_settings = frappe.get_doc("Task Tracker Settings")
     if tt_settings.automatically_apply_workflow_action:
         after_days = tt_settings.after_days
-        if after_days > 0:
+        if after_days >= 0:
             from_workflow_state = tt_settings.from_workflow_state
             workflow_action = tt_settings.workflow_action
             from_date = tt_settings.from_date
             # from_date = formatdate(from_date, "dd-mm-yyyy")
 
-            cutoff_date = add_days(nowdate(), -after_days)
+            cutoff_date = add_days(nowdate(), -after_days if after_days > 0 else 0)
             # cutoff_date = formatdate(cutoff_date, "dd-mm-yyyy")
             timesheets = frappe.get_all("Timesheet",
                 filters=[
-                    ["Timesheet","creation","<=",cutoff_date],
-                    ["Timesheet","creation",">=",from_date],
+                    ["Timesheet","creation","Between",[from_date,cutoff_date]],
                     ["Timesheet","workflow_state","=",from_workflow_state]
                 ],
                 fields=["name", "owner"]
@@ -99,6 +98,33 @@ def auto_submit_timesheets():
             for ts in timesheets:
                 try:
                     timesheet = frappe.get_doc("Timesheet", ts.name)
+
+                    # Clean up Timesheet Logs
+                    cleaned_logs = []
+                    for log in timesheet.time_logs:
+                        from_time = log.from_time
+                        to_time = log.to_time
+
+                        # Case 1: Both missing → skip (delete)
+                        if not from_time and not to_time:
+                            continue
+
+                        # Case 2: from_time present but to_time missing
+                        if from_time and not to_time:
+                            log.to_time = from_time
+
+                        # Case 3: to_time present but from_time missing
+                        elif to_time and not from_time:
+                            log.from_time = to_time
+
+                        cleaned_logs.append(log)
+
+                    # Replace logs with cleaned list
+                    timesheet.time_logs = cleaned_logs
+
+                    # Save the cleaned Timesheet
+                    timesheet.save(ignore_permissions=True)
+
                     # Apply workflow transition as the creator of the timesheet
                     frappe.set_user(ts["owner"])
                     

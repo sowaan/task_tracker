@@ -8,7 +8,8 @@ import json
 from transformers import pipeline
 from huggingface_hub import InferenceClient
 import datetime
-from frappe.utils import get_datetime, now_datetime
+from frappe.utils import get_datetime
+from pytz import timezone, utc
 
 
 @frappe.whitelist()
@@ -28,7 +29,15 @@ def get_heatmap_data(timesheet):
     total_not_working_hours = 0
     total_productive_hours = 0
     total_non_productive_hours = 0
-    
+
+    system_timezone = frappe.db.get_single_value("System Settings", "time_zone")
+    if not system_timezone:
+        frappe.throw("Please set the System Time Zone in System Settings.")
+
+    user_timezone = doc.custom_timezone or frappe.db.get_value("User", doc.owner, "time_zone")
+    if not user_timezone:
+        frappe.throw(f"Please set a Time Zone for user {doc.owner} in User Settings.")
+
     if (doc.custom_heatmap_data and doc.docstatus != 0):
         json_data = json.loads(doc.custom_heatmap_data)
         heatmap_data = json_data.get("heatmap_data")
@@ -85,13 +94,18 @@ def get_heatmap_data(timesheet):
 
         # Store heartbeats with their status
         heartbeat_data = {
-            get_datetime(hb.creation).strftime("%Y-%m-%d %H:%M"): {
+            get_datetime(convert_timezone(hb.creation, system_timezone, user_timezone)).strftime("%Y-%m-%d %H:%M"): {
                 "flag": hb.productivity_flag,
                 "reason": hb.productivity_reason,
                 "screenshots": attachments_map.get(hb.name, [])
             }
             for hb in heartbeats
         }
+
+        #test work
+        # data = json.loads(heartbeat_data)
+
+        # print(json.dumps(heartbeat_data, indent=4, sort_keys=True))
 
         # Process data for each time log
         for log in time_logs:
@@ -119,7 +133,20 @@ def get_heatmap_data(timesheet):
             isEnd = False
             while current_time <= to_time and not isEnd:
                 time_str = current_time.strftime("%Y-%m-%d %H:%M")
+                # print(f"log.description: {log.description}")
+                # print(f"Processing time: {time_str}")
                 heartbeat_entry = heartbeat_data.get(time_str, None)
+
+                # If not found, check ±1 minute
+                if not heartbeat_entry:
+                    # Prepare time strings for -1 and +1 minute
+                    prev_minute = (current_time - datetime.timedelta(minutes=1)).strftime("%Y-%m-%d %H:%M")
+                    next_minute = (current_time + datetime.timedelta(minutes=1)).strftime("%Y-%m-%d %H:%M")
+
+                    heartbeat_entry = (
+                        heartbeat_data.get(next_minute) or
+                        heartbeat_data.get(prev_minute)
+                    )
 
                 if heartbeat_entry:
                     productivity_flag = heartbeat_entry["flag"]
@@ -188,6 +215,31 @@ def get_heatmap_data(timesheet):
         "show_summary_on_timesheet": task_tracker_settings.show_summary_on_timesheet
     }
 
+
+def convert_timezone(dt_value, from_tz, to_tz):
+    """
+    Convert datetime between timezones. Works with both str and datetime input.
+    
+    Example:
+        convert_timezone("2025-10-13 09:01:00", "Africa/Cairo", "UTC")
+        convert_timezone(datetime_obj, "UTC", "Asia/Dubai")
+    """
+    from_zone = timezone(from_tz)
+    to_zone = timezone(to_tz)
+    
+    # Parse if it's a string
+    if isinstance(dt_value, str):
+        dt_value = datetime.datetime.strptime(dt_value, "%Y-%m-%d %H:%M:%S")
+
+    # Localize (attach source timezone)
+    if dt_value.tzinfo is None:
+        dt_value = from_zone.localize(dt_value)
+    else:
+        # if already timezone-aware, ensure it's in the source tz first
+        dt_value = dt_value.astimezone(from_zone)
+
+    # Convert to target timezone
+    return dt_value.astimezone(to_zone)
 
 
 def analyze_image(image_path, job_description=None):

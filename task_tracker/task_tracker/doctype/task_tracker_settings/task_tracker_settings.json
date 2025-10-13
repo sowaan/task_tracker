@@ -24,12 +24,16 @@
   "timesheets_tab",
   "default_project",
   "default_activity_type",
+  "draft_workflow_state",
   "timesheet_automation_column",
   "automatically_apply_workflow_action",
   "from_date",
   "after_days",
   "from_workflow_state",
   "workflow_action",
+  "tasks_tab",
+  "task_workflow_state",
+  "column_break_sgpx",
   "settings_tab",
   "use_sowaan_ai",
   "sowaan_ai_instance_name",
@@ -287,13 +291,38 @@
    "fieldtype": "Data",
    "label": "Show Reason on Heartbeat Map",
    "placeholder": "abc@sowaan.com, xyz@sowaan.com"
+  },
+  {
+   "fieldname": "tasks_tab",
+   "fieldtype": "Tab Break",
+   "label": "Tasks"
+  },
+  {
+   "description": "Tasks with this state would be shown to users in Desktop App",
+   "fieldname": "task_workflow_state",
+   "fieldtype": "Link",
+   "label": "Task Workflow State",
+   "options": "Workflow State"
+  },
+  {
+   "fieldname": "column_break_sgpx",
+   "fieldtype": "Column Break"
+  },
+  {
+   "description": "Timesheets with this workflow state can be used for recording time logs for today.",
+   "fieldname": "draft_workflow_state",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Draft Workflow State",
+   "options": "Workflow State",
+   "reqd": 1
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "issingle": 1,
  "links": [],
- "modified": "2025-09-05 14:52:23.797098",
+ "modified": "2025-10-08 13:00:28.180605",
  "modified_by": "Administrator",
  "module": "Task Tracker",
  "name": "Task Tracker Settings",

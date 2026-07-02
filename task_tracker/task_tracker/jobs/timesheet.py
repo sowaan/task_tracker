@@ -4,38 +4,76 @@ from frappe.utils import add_days, nowdate, formatdate
 from task_tracker.task_tracker.apis.timesheet import send_screenshot_to_sowaan_ai
 from datetime import datetime, timedelta
 
-def delete_old_timesheet_heartbeats():
-    delete_heartbeat_data_after_days = frappe.db.get_single_value('Task Tracker Settings', 'delete_heartbeat_data_after_days')
-    if not delete_heartbeat_data_after_days:
-        delete_heartbeat_data_after_days = 30
+BATCH_SIZE = 1000
 
-    # Calculate the cutoff date: 30 days ago
-    cutoff_date = add_days(nowdate(), -delete_heartbeat_data_after_days)
-    
-    # Get all Timesheets which are submitted and with a posting_date or modified date (depending on your workflow)
-    timesheets = frappe.get_all("Timesheet", 
-        filters={
-            "docstatus": 1,  # 1 indicates submitted
-            "custom_heatmap_data": ["is", "set"],
-            "modified": ["<=", cutoff_date]
-        },
-        fields=["name"]
+def delete_old_timesheet_heartbeats():
+    delete_after_days = (
+        frappe.db.get_single_value("Task Tracker Settings", "delete_heartbeat_data_after_days")
+        or 30
     )
 
-    # Log the number of timesheets found for deletion of heartbeats
-    frappe.log(f"Deleting Timesheet Heartbeats: Found {len(timesheets)} timesheets submitted on or before {cutoff_date}")
+    cutoff_date = add_days(nowdate(), -delete_after_days)
 
-    for ts in timesheets:
-        # Assuming "Timesheet Heartbeat" links to Timesheet via a field "timesheet"
-        heartbeats = frappe.get_all("Timesheet Heartbeat", filters={"timesheet": ts.name}, fields=["name"])
-        for hb in heartbeats:
+    frappe.logger().info(f"Heartbeat cleanup started. Cutoff: {cutoff_date}")
+
+    while True:
+
+        # STEP 1: Get batch of heartbeat names (small chunk only)
+        heartbeats = frappe.get_all(
+            "Timesheet Heartbeat",
+            filters={
+                "modified": ["<=", cutoff_date],
+                "docstatus": ["!=", 2],  # optional safety
+            },
+            fields=["name"],
+            limit=BATCH_SIZE
+        )
+
+        if not heartbeats:
+            break
+
+        heartbeat_names = [h.name for h in heartbeats]
+
+        # STEP 2: Fetch all attached files in one query
+        files = frappe.get_all(
+            "File",
+            filters={
+                "attached_to_doctype": "Timesheet Heartbeat",
+                "attached_to_name": ["in", heartbeat_names]
+            },
+            fields=["name"]
+        )
+
+        file_names = [f.name for f in files]
+
+        # STEP 3: Delete files first (important for cleanup integrity)
+        for fname in file_names:
             try:
-                frappe.delete_doc("Timesheet Heartbeat", hb.name, ignore_permissions=True, force=True)
+                frappe.delete_doc("File", fname, ignore_permissions=True, force=True)
             except Exception as e:
-                frappe.log_error(title="Error Deleting Timesheet Heartbeat", message=f"Error deleting Heartbeat {hb.name} for Timesheet {ts.name}: {e}")
+                frappe.log_error(
+                    title="Heartbeat File Deletion Error",
+                    message=f"File: {fname}\nError: {str(e)}"
+                )
 
-    #commit the db
-    frappe.db.commit()
+        # STEP 4: Bulk delete heartbeats (FAST SQL DELETE)
+        try:
+            frappe.db.sql("""
+                DELETE FROM `tabTimesheet Heartbeat`
+                WHERE name IN %(names)s
+            """, {"names": heartbeat_names})
+
+        except Exception as e:
+            frappe.log_error(
+                title="Heartbeat Bulk Delete Error",
+                message=str(e)
+            )
+
+        frappe.db.commit()
+
+        frappe.logger().info(f"Deleted batch of {len(heartbeat_names)} heartbeats")
+
+    frappe.logger().info("Heartbeat cleanup completed.")
 
 
 def send_heartbeats_to_sowaan_ai():
